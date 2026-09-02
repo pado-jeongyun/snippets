@@ -1,8 +1,9 @@
 schema: relay/v1
 name: "@local/snippets"
-version: 0.1.0
+version: 0.1.2
 display_name: 문구 보관함
-description: 자주 쓰는 문구를 이름 붙여 저장하고 필요할 때 이름이나 키워드로 바로 꺼내 쓰는 도우미. 이메일 서식, 안내 문구, 자주 붙여넣는 주소나 서명 같은 것을 한 곳에 모아 대화로 저장하고, 쌓인 문구는 화면에서 훑어보고 검색해 바로 복사한다.
+description: 자주 쓰는 문구를 이름 붙여 저장하고 필요할 때 이름이나 키워드로 바로 꺼내 쓰는 도우미. 이메일 서식, 안내 문구,
+  자주 붙여넣는 주소나 서명 같은 것을 한 곳에 모아 대화로 저장하고, 쌓인 문구는 화면에서 훑어보고 검색해 바로 복사한다.
 icon: assets/icon.svg
 harness:
   variants:
@@ -18,7 +19,8 @@ agents:
     persona: agents/snippets/AGENT.md
     dispatch:
       - keeper
-    greeting: 문구 보관함입니다. 자주 쓰는 문구를 저장해 두고, 필요할 때 이름이나 키워드로 바로 꺼내 드립니다. 쌓인 문구는 이 화면에서 훑어보고 복사하실 수 있습니다.
+    greeting: 문구 보관함입니다. 자주 쓰는 문구를 저장해 두고, 필요할 때 이름이나 키워드로 바로 꺼내 드립니다. 쌓인 문구는 이 화면에서
+      훑어보고 복사하실 수 있습니다.
   - name: keeper
     persona: agents/keeper/AGENT.md
     scripts:
