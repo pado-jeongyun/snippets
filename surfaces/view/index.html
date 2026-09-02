@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>문구 보관함</title>
+<link rel="stylesheet" href="/assets/chat-app.css">
+<style>
+:root {
+  --bg: #f6f6f4; --card: #ffffff; --ink: #1b1b1b; --sub: #767676;
+  --line: #e3e3df; --accent: #1b1b1b; --accent-soft: #eeeeea;
+  --accent-contrast: #ffffff; --rc-accent: #1b1b1b;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #151514; --card: #1f1f1e; --ink: #eaeae6; --sub: #909089;
+          --line: #343432; --accent: #eaeae6; --accent-soft: #2b2b29;
+          --accent-contrast: #151514; --rc-accent: #eaeae6; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
+  font-size: 15px; line-height: 1.6;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 120px; }
+header.top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+header.top h1 { margin: 0; font-size: 22px; font-weight: 700; }
+#count { color: var(--sub); font-size: 13px; }
+.search { position: relative; margin-bottom: 14px; }
+.search input {
+  width: 100%; padding: 11px 40px 11px 14px; font-size: 15px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px; outline: none;
+}
+.search input:focus { border-color: var(--accent); }
+.search button {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  border: 0; background: none; color: var(--sub); font-size: 13px; cursor: pointer; padding: 6px 8px;
+}
+nav.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.chip {
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer;
+}
+.chip .n { color: var(--sub); margin-left: 4px; font-size: 12px; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.chip.on .n { color: var(--accent-contrast); opacity: .7; }
+main#list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 16px; cursor: pointer; transition: transform .08s ease, box-shadow .08s ease;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.07); }
+.card .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.card h2 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4; word-break: break-all; }
+.card .copy {
+  flex: none; border: 1px solid var(--line); background: none; color: var(--sub);
+  border-radius: 8px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+}
+.card .copy:hover { color: var(--ink); border-color: var(--accent); }
+.card .prev {
+  color: var(--sub); font-size: 13px; margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  white-space: pre-wrap; word-break: break-all;
+}
+.card .pills, #d-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { background: var(--accent-soft); color: var(--sub); border-radius: 6px; padding: 1px 8px; font-size: 12px; }
+#empty { text-align: center; color: var(--sub); padding: 70px 20px; }
+#overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 50;
+}
+#detail {
+  background: var(--card); border-radius: 14px; max-width: 700px; width: 100%;
+  max-height: calc(100vh - 80px); overflow-y: auto; padding: 22px 24px 28px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+}
+#detail .bar { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+#detail .bar button {
+  border: 1px solid var(--line); background: none; color: var(--ink);
+  border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+}
+#detail .bar #d-copy { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+#d-title { margin: 0 0 6px; font-size: 19px; font-weight: 700; line-height: 1.4; word-break: break-all; }
+#d-meta { color: var(--sub); font-size: 12px; margin-bottom: 10px; }
+#d-text {
+  margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--line);
+  white-space: pre-wrap; word-break: break-all; font-family: inherit; font-size: 15px;
+}
+#toast {
+  position: fixed; left: 20px; bottom: 20px; z-index: 60;
+  background: var(--ink); color: var(--bg); border-radius: 10px;
+  padding: 10px 16px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  opacity: 0; transform: translateY(8px); transition: all .25s ease; pointer-events: none;
+}
+#toast.show { opacity: 1; transform: none; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>문구 보관함</h1>
+    <span id="count">불러오는 중</span>
+  </header>
+  <div class="search">
+    <input id="q" type="search" placeholder="이름·본문·꼬리표로 검색" autocomplete="off">
+    <button id="clear" hidden>지우기</button>
+  </div>
+  <nav class="tags" id="tags"></nav>
+  <main id="list"></main>
+  <div id="empty" hidden></div>
+</div>
+
+<div id="overlay" hidden>
+  <article id="detail">
+    <div class="bar">
+      <button id="back">목록으로</button>
+      <button id="d-copy">문구 복사</button>
+    </div>
+    <h2 id="d-title"></h2>
+    <div id="d-meta"></div>
+    <div id="d-tags"></div>
+    <pre id="d-text"></pre>
+  </article>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="/assets/chat-app.js"></script>
+<script>
+(() => {
+  const ctx = window.__RELAY_CONTEXT || { base: "" };
+  const base = ctx.base;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  async function verb(name, input = {}) {
+    const res = await fetch(`${base}/script/${name}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ input }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.error) throw new Error(data?.error ?? `${res.status}`);
+    return data.result;
+  }
+
+  let tag = null;        // 선택된 꼬리표
+  let query = "";        // 검색어
+  let tagCounts = [];    // 전체 기준 꼬리표 집계
+  let rows = [];         // 지금 그린 목록
+  let currentId = null;  // 열려 있는 문구
+  let currentName = "";
+  let sig = "";          // 화면 내용 지문 — 대화 턴 뒤 변화 감지용
+  let toastTimer = null;
+
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 3500);
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch {}
+      ta.remove();
+      return ok;
+    }
+  }
+
+  function setScene() {
+    let s;
+    if (currentId) {
+      s = `문구 화면에서 "${currentName}" (id: ${currentId}) 한 편을 펼쳐 보는 중`;
+    } else {
+      s = "문구 목록 화면을 보는 중";
+      if (tag) s += `, "${tag}" 꼬리표로 추림`;
+      if (query) s += `, "${query}" 로 검색 중`;
+    }
+    window.dispatchEvent(new CustomEvent("relay:scene", { detail: { scene: s } }));
+  }
+
+  function renderTags() {
+    const nav = $("tags");
+    if (!tagCounts.length) { nav.innerHTML = ""; return; }
+    const chips = [`<button class="chip${tag === null ? " on" : ""}" data-tag="">전체</button>`];
+    for (const t of tagCounts) {
+      chips.push(`<button class="chip${tag === t.name ? " on" : ""}" data-tag="${esc(t.name)}">${esc(t.name)}<span class="n">${t.count}</span></button>`);
+    }
+    nav.innerHTML = chips.join("");
+    for (const b of nav.querySelectorAll(".chip")) {
+      b.addEventListener("click", () => {
+        tag = b.dataset.tag || null;
+        void load();
+      });
+    }
+  }
+
+  function renderList(items, total) {
+    rows = items;
+    sig = items.map((s) => s.id + "|" + s.preview).join("//") + "#" + total;
+    const label = [
+      query ? `"${query}" 검색` : null,
+      tag ? `"${tag}" 꼬리표` : null,
+    ].filter(Boolean).join(" · ");
+    $("count").textContent = label ? `${label} ${items.length}개` : `전체 ${total}개`;
+
+    const list = $("list");
+    const empty = $("empty");
+    if (!items.length) {
+      list.innerHTML = "";
+      empty.hidden = false;
+      empty.textContent = query || tag
+        ? "조건에 맞는 문구가 없습니다."
+        : "아직 저장한 문구가 없습니다. 오른쪽 아래 대화창에 자주 쓰는 문구를 말씀해 보세요.";
+      return;
+    }
+    empty.hidden = true;
+    list.innerHTML = items.map((s) => `
+      <div class="card" data-id="${esc(s.id)}">
+        <div class="head">
+          <h2>${esc(s.name)}</h2>
+          <button class="copy" data-copy="${esc(s.id)}">복사</button>
+        </div>
+        <p class="prev">${esc(s.preview ?? "")}</p>
+        ${s.tags?.length ? `<div class="pills">${s.tags.map((t) => `<span class="pill">${esc(t)}</span>`).join("")}</div>` : ""}
+      </div>`).join("");
+    for (const c of list.querySelectorAll(".card")) {
+      c.addEventListener("click", () => void openDetail(c.dataset.id));
+    }
+    for (const b of list.querySelectorAll(".copy")) {
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        void copyById(b.dataset.copy);
+      });
+    }
+  }
+
+  async function copyById(id) {
+    try {
+      const r = await verb("snippet-read", { id });
+      const ok = await copyText(r.body);
+      toast(ok ? `"${r.snippet?.name ?? ""}" 문구를 복사했습니다` : "복사하지 못했습니다 — 문구를 열어 직접 선택해 주세요");
+    } catch (e) {
+      toast(`문구를 꺼내지 못했습니다: ${e.message}`);
+    }
+  }
+
+  async function load() {
+    try {
+      // 꼬리표 집계는 언제나 전체 기준 — 검색 중에도 목록 전체의 꼬리표가 보인다
+      const all = await verb("snippet-list", {});
+      const counts = new Map();
+      for (const s of all.snippets) {
+        for (const t of s.tags ?? []) counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+      tagCounts = [...counts.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+      if (tag && !counts.has(tag)) tag = null;
+      renderTags();
+
+      let items = query ? (await verb("snippet-list", { query })).snippets : all.snippets;
+      if (tag) items = items.filter((s) => (s.tags ?? []).includes(tag));
+      renderList(items, all.count);
+    } catch (e) {
+      $("count").textContent = "불러오지 못했습니다";
+      toast(`문구를 불러오지 못했습니다: ${e.message}`);
+    }
+    setScene();
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  function fillDetail(r) {
+    const s = r.snippet;
+    currentId = s.id;
+    currentName = s.name;
+    $("d-title").textContent = s.name;
+    $("d-meta").textContent = [
+      s.created_at && `저장 ${fmtDate(s.created_at)}`,
+      s.updated_at && s.updated_at !== s.created_at && `고침 ${fmtDate(s.updated_at)}`,
+    ].filter(Boolean).join(" · ");
+    $("d-tags").innerHTML = (s.tags || []).map((t) => `<span class="pill">${esc(t)}</span>`).join("");
+    $("d-text").textContent = r.body;
+  }
+
+  async function openDetail(id) {
+    try {
+      fillDetail(await verb("snippet-read", { id }));
+      $("overlay").hidden = false;
+      setScene();
+    } catch (e) {
+      toast(`문구를 열지 못했습니다: ${e.message}`);
+    }
+  }
+
+  function closeDetail() {
+    $("overlay").hidden = true;
+    currentId = null;
+    currentName = "";
+    setScene();
+  }
+
+  $("back").addEventListener("click", closeDetail);
+  $("overlay").addEventListener("click", (e) => { if (e.target === $("overlay")) closeDetail(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && currentId) closeDetail(); });
+
+  $("d-copy").addEventListener("click", async () => {
+    const ok = await copyText($("d-text").textContent);
+    toast(ok ? `"${currentName}" 문구를 복사했습니다` : "복사하지 못했습니다 — 본문을 직접 선택해 주세요");
+  });
+
+  let searchTimer = null;
+  $("q").addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    const v = $("q").value.trim();
+    $("clear").hidden = !v;
+    searchTimer = setTimeout(() => { query = v; void load(); }, 250);
+  });
+  $("clear").addEventListener("click", () => {
+    $("q").value = "";
+    $("clear").hidden = true;
+    query = "";
+    void load();
+  });
+
+  // 대화로 문구가 바뀌면 그 자리에서 따라간다 — 화면이 조용히 바뀌지 않게 알린다
+  window.addEventListener("relay:turn", async (e) => {
+    const d = e.detail || {};
+    if (d.phase !== "settled") return;
+    const prev = sig;
+    await load();
+    if (currentId) {
+      try { fillDetail(await verb("snippet-read", { id: currentId })); }
+      catch { closeDetail(); toast("보고 있던 문구가 사라져 목록으로 돌아왔습니다"); return; }
+    }
+    if (sig !== prev) toast("문구 보관함이 방금 문구를 고쳤습니다");
+  });
+
+  void load();
+})();
+</script>
+</body>
+</html>
